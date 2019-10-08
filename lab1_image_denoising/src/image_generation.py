@@ -14,15 +14,18 @@ from utils import (
 
 
 def add_noise(image, epsilon):
+    print("Adding noise with epsilon =", epsilon)
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             if random.rand() < epsilon:
                 image[i][j] = 1 - image[i][j] % 2
     imsave('images/noised_image.png', image, cmap=gray)
+    print("Noised image is saved to \"images/noised_image.png\"")
     return image
 
 
 def sample_input_image(height, width, beta, iterations):
+    print("Generating input image", height, "x", width)
     image = random.randint(2, size=(height, width))  # U([0, 1])
     for iteration in range(iterations):
         for i in range(height):
@@ -41,6 +44,7 @@ def sample_input_image(height, width, beta, iterations):
                 else:
                     image[i][j] = 1
     imsave('images/input_image.png', image, cmap=gray)
+    print("Generated image is saved to \"images/input_image.png\"")
     return image
 
 
