@@ -1,5 +1,16 @@
 # Black and white image denoising with Gibbs sampler
 
+## Problem formulation
+
+There is a true image of black and white pixels `k in {0, 1}^T`,
+where `T = {(i, j) | 0 <= i < image_height, 0 <= j < image_width}`
+is a set of all pixels.
+This image is noised so that each pixel inverts color with probability `epsilon`.
+After adding noise the color of pixel `t` is
+`x(t) = 1 - k(t)` with probability `epsilon` and
+`x(t) = k(t)` with probability `1 - epsilon`.
+Using Gibbs sampler it is needed to remove noise from the image.
+
 ## Grid graph
 
 Each pixel is a graph node.
@@ -9,10 +20,17 @@ It a node is not on the image edge, it has 4 neighbors:
 - right: `2`
 - bottom: `3`
 
+A set of neighbors of node `t` is `N(t)`.
+
 Each node has two labels: `0` (black color) and `1` (white color).
+Node weight equals `q_t(k) = -log(1 - epsilon)` if `x(t) = k` and
+`q_t(k) = -log(epsilon)` if `x(t) != k`.
+
 There are edges between all neighbor nodes connecting all labels.
 Edge weight is `0` if it connects the same labels and
-`beta` if the labels are different.
+`beta` if the labels are different:
+`g_{tt'}(k(t), k(t')) = 0` if `k(t) = k(t')` and
+`g_{tt'}(k(t), k(t')) = beta` if `k(t) != k(t')`, where `beta in [0.7, 2.0]`.
 
 ## Image generation
 
@@ -41,10 +59,33 @@ If `x >= t`, then `1` label is fixed in the pixel.
 After proceeding this for all pixels many times image obtains noise:
 each pixel changes its color with probability `epsilon.`
 
+## Gibbs sampler
+
+For such structures, the probability distribution is exponential:
+
+![Alt text](images/exponential_distribution.png)
+
+where `lambda(g)` is a normalization factor.
+
+Probability of a label `k(t)` in node `t`
+with fixed labeling depends only from labels of neighbor nodes
+
+![Alt text](images/label_probability.png)
+
+Firstly, random labeling (image) is generated `{k(t) | t in T}`.
+
+Then, for each object `t in T` a label `k(t)` is sampled from distribution `p(k(t) | k(N(t)))`.
+This step is repeated while labeling changes or while a given number of iterations is not done.
+
+## Getting result
+
+After for example `2000` iterations we memorize for example the result of each `30`th iteration.
+Then the most common color is defined for each pixel.
+It would be a result.
 
 ## Testing
 
-To test functions run
+To test some functions run
 ```bash
 pytest
 ```
