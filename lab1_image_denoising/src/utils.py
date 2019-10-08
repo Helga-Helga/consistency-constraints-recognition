@@ -1,3 +1,6 @@
+from numpy import log
+
+
 def neighbor_exists(image_height, image_width, i, j, neighbor_number):
     if neighbor_number == 0 and j > 0:
         return True
@@ -29,3 +32,10 @@ def edge_weight(label1, label2, beta):
         return 0
     else:
         return beta
+
+
+def node_weight(initial_color, noised_color, epsilon):
+    if initial_color == noised_color:
+        return -log(1 - epsilon)
+    else:
+        return -log(epsilon)

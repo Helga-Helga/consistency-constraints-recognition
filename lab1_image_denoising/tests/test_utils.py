@@ -5,7 +5,10 @@ from src.utils import (
     neighbor_exists,
     get_neighbor_coordinate,
     edge_weight,
+    node_weight,
 )
+
+from numpy import log
 
 
 def test_neighbor_exists():
@@ -26,3 +29,8 @@ def test_edge_weight():
     assert edge_weight(0, 0, 1) == 0
     assert edge_weight(1, 0, 0) == 0
     assert edge_weight(1, 0, 1) == 1
+
+
+def test_node_weight():
+    assert node_weight(0, 0, 0.5) == -log(0.5)
+    assert node_weight(0, 1, 1) == 0
