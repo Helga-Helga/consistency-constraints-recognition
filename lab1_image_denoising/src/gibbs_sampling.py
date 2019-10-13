@@ -32,7 +32,17 @@ def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
     return labeling
 
 
-def gibbs_sampling(initial_image, noised_image, epsilon, beta, iterations):
+def almost_equal_labelings(labeling1, labeling2, error_rate):
+    height, width = labeling1.shape
+    max_errors = height * width * error_rate / 100
+    current_errors = 0
+    for i in range(height):
+        for j in range(width):
+            if labeling1[i][j] != labeling2[i][j]:
+                current_errors += 1
+            if current_errors > max_errors:
+                return False
+    return True
     print("Image denoising with Gibbs sampler...")
     height, width = initial_image.shape
     labeling = random.randint(2, size=(height, width))  # U{0, 1}
@@ -42,6 +52,9 @@ def gibbs_sampling(initial_image, noised_image, epsilon, beta, iterations):
         if iteration > save_after and iteration % save_step == 0:
             sums_of_zero_labels += labeling ^ 1
             sums_of_unit_labels += labeling
+        if almost_equal_labelings(labeling_prev, labeling, 5):
+            break
+        print(iteration)
     imsave('images/labeling.png', labeling, cmap=gray)
     print("Resulting image is saved to \"images/labeling.png\"")
     return labeling
