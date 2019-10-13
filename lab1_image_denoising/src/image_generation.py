@@ -15,34 +15,31 @@ from utils import (
 
 def add_noise(image, epsilon):
     print("Adding noise with epsilon =", epsilon)
+    noised_image = image.copy()
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
-            if random.rand() < epsilon:
-                image[i][j] = 1 - image[i][j] % 2
-    imsave('images/noised_image.png', image, cmap=gray)
+            if random.uniform() < epsilon:  # U[0, 1]
+                noised_image[i][j] = 1 - image[i][j]
+    imsave('images/noised_image.png', noised_image, cmap=gray)
     print("Noised image is saved to \"images/noised_image.png\"")
-    return image
+    return noised_image
 
 
 def sample_input_image(height, width, beta, iterations):
     print("Generating input image", height, "x", width)
-    image = random.randint(2, size=(height, width))  # U([0, 1])
+    image = random.randint(2, size=(height, width))  # U{0, 1}
     for iteration in range(iterations):
         for i in range(height):
             for j in range(width):
-                zero_weight = 0
-                unit_weight = 0
-                for n in range(4):
+                zero_weight = 0  # sum of edges weights going from zero label
+                unit_weight = 0  # sum of edges weights going from unit label
+                for n in range(4):  # for all neighbors
                     if neighbor_exists(height, width, i, j, n):
                         i_n, j_n = get_neighbor_coordinate(i, j, n)
                         zero_weight += edge_weight(0, image[i_n][j_n], beta)
                         unit_weight += edge_weight(1, image[i_n][j_n], beta)
                 t = exp(-zero_weight) / (exp(-zero_weight) + exp(-unit_weight))
-                x = random.rand()
-                if x < t:
-                    image[i][j] = 0
-                else:
-                    image[i][j] = 1
+                image[i][j] = int(random.uniform() >= t)  # U [0, 1]
     imsave('images/input_image.png', image, cmap=gray)
     print("Generated image is saved to \"images/input_image.png\"")
     return image
