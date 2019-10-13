@@ -28,14 +28,11 @@ def get_neighbor_coordinate(i, j, neighbor_number):
 
 
 def edge_weight(label1, label2, beta):
-    if label1 == label2:
-        return 0
-    else:
-        return beta
+    return 0 if (label1 == label2) else beta
 
 
-def node_weight(initial_color, noised_color, epsilon):
-    if initial_color == noised_color:
+def node_weight(label, noised_color, epsilon):
+    if label == noised_color:
         return -log(1 - epsilon)
     else:
         return -log(epsilon)
