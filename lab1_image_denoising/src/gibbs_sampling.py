@@ -89,6 +89,21 @@ def gibbs_sampling(initial_image, noised_image,
     return labeling
 
 
+def count_errors(image, noised_image, labeling):
+    errors = 0
+    noised_errors = 0
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            if image[i][j] != labeling[i][j]:
+                errors += 1
+            if noised_image[i][j] != labeling[i][j]:
+                noised_errors += 1
+    percent = 100 * errors / (image.shape[0] * image.shape[1])
+    print("Number of incorrectly recognized pixels: {}, it is {}% of image"
+          .format(errors, percent))
+    print("Number of errors from noised image: {}".format(noised_errors))
+
+
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -107,3 +122,4 @@ if __name__ == "__main__":
     labeling = gibbs_sampling(initial_image, noised_image,
                               epsilon, beta,
                               iterations_for_gibbs, save_after, save_step)
+    count_errors(initial_image, noised_image, labeling)
