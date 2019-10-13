@@ -1,3 +1,5 @@
+import configparser
+
 from numpy import (
     random,
     exp,
@@ -70,9 +72,20 @@ def gibbs_sampling(initial_image, noised_image, epsilon, beta, iterations):
 
 
 if __name__ == "__main__":
-    beta = 1.0
-    initial_image = sample_input_image(20, 20, beta, 5000)
-    epsilon = 0.1
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    beta = float(config['EDGE_WEIGHT']['beta'])
+    image_height = int(config['IMAGE_SIZE']['height'])
+    image_width = int(config['IMAGE_SIZE']['width'])
+    iterations_for_image_generation = int(
+        config['ITERATIONS']['iterations_for_image'])
+    initial_image = sample_input_image(
+        image_height, image_width, beta, iterations_for_image_generation)
+    epsilon = float(config['NOISE_LEVEL']['epsilon'])
     noised_image = add_noise(initial_image, epsilon)
-    labeling = gibbs_sampling(
-        initial_image, initial_image, epsilon, beta, 10000)
+    iterations_for_gibbs = int(config['ITERATIONS']['iterations_for_gibbs'])
+    save_after = int(config['ITERATIONS']['save_after'])
+    save_step = int(config['iterations']['save_step'])
+    labeling = gibbs_sampling(initial_image, noised_image,
+                              epsilon, beta,
+                              iterations_for_gibbs, save_after, save_step)

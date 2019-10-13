@@ -1,5 +1,26 @@
 # Black and white image denoising with Gibbs sampler
 
+## How to use
+
+Activate the working environment using
+
+```bash
+pipenv shell
+```
+
+Specify all parameters in `config.ini` file.
+From the parent directory run
+
+```bash
+python gibbs_sampling.py
+```
+
+Deactivate the environment using
+
+```bash
+exit
+```
+
 ## Problem formulation
 
 There is a true image of black and white pixels `k in {0, 1}^T`,
@@ -79,7 +100,7 @@ This step is repeated while labeling changes or while a given number of iteratio
 
 ## Getting result
 
-After for example `2000` iterations we memorize for example the result of each `30`th iteration.
+After some number of iterations we memorize the result of each `n`th iteration.
 Then the most common color is defined for each pixel.
 It would be a result.
 
