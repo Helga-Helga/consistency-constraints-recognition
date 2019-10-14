@@ -53,50 +53,49 @@ def gibbs_iteration(labeling, height, width, epsilon, beta):
             unit = exp(-node_weight(
                 1, noised_image[i, j], epsilon) - sum_unit_edges)
             t = zero / (zero + unit)
-            labeling[i][j] = int(random.uniform() >= t)  # U[0, 1]
+            labeling[i, j] = int(random.uniform() >= t)  # U[0, 1]
     return labeling
 
 
-def almost_equal_labelings(labeling1, labeling2, error_rate):
+def almost_equal_labelings(labeling1, labeling2, changes_threshold):
     """
-    Returns True if there are not more than error_rate% of mismatching pixels
+    Returns True if there are not more than
+    changes_threshold% of mismatching pixels
     """
     height, width = labeling1.shape
-    max_errors = height * width * error_rate / 100
+    max_errors = height * width * changes_threshold / 100
     current_errors = 0
     for i in range(height):
         for j in range(width):
-            if labeling1[i][j] != labeling2[i][j]:
+            if labeling1[i, j] != labeling2[i, j]:
                 current_errors += 1
             if current_errors > max_errors:
                 return False
-        print(current_errors)
     return True
 
 
 def gibbs_sampling(initial_image, noised_image,
-                   epsilon, beta):
+                   epsilon, beta,
+                   changes_threshold):
     print("Image denoising with Gibbs sampler...")
     height, width = initial_image.shape
     labeling = random.randint(2, size=(height, width))  # U{0, 1}
     sums_of_zero_labels = zeros(shape=(height, width))
     sums_of_unit_labels = zeros(shape=(height, width))
     iteration = 0
-    try:
-        while True:
-            iteration += 1
-            labeling_prev = labeling.copy()
-            labeling = gibbs_iteration(labeling, height, width, epsilon, beta)
-            if iteration > 5 and iteration % 2 == 0:
-                # Save labeling
-                sums_of_zero_labels += labeling ^ 1
-                sums_of_unit_labels += labeling
-            # Break iterations when not more than 5% of pixels have changed
-            if almost_equal_labelings(labeling_prev, labeling, 5):
-                break
-            print("Iteration # {}".format(iteration))
-    except KeyboardInterrupt:
-        pass
+    while True:
+        iteration += 1
+        labeling_prev = labeling.copy()
+        labeling = gibbs_iteration(labeling, height, width, epsilon, beta)
+        if iteration > 5 and iteration % 2 == 0:
+            # Save labeling
+            sums_of_zero_labels += labeling ^ 1
+            sums_of_unit_labels += labeling
+        # Break iterations when not more than 5% of pixels have changed
+        if almost_equal_labelings(
+                labeling_prev, labeling, changes_threshold):
+            break
+        print("Iteration # {}".format(iteration))
     result = get_labeling(sums_of_zero_labels, sums_of_unit_labels)
     imsave('images/labeling.png', labeling, cmap=gray)
     print("Resulting image is saved to \"images/labeling.png\"")
@@ -133,5 +132,8 @@ if __name__ == "__main__":
     epsilon = float(config['NOISE_LEVEL']['epsilon'])
     noised_image = add_noise(initial_image, epsilon)
 
-    labeling = gibbs_sampling(initial_image, noised_image, epsilon, beta_gibbs)
+    changes_threshold = int(config['ITERATIONS']['changes_threshold'])
+    labeling = gibbs_sampling(initial_image, noised_image,
+                              epsilon, beta_gibbs,
+                              changes_threshold)
     count_errors(initial_image, labeling)

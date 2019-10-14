@@ -96,11 +96,12 @@ with fixed labeling depends only from labels of neighbor nodes
 Firstly, random labeling (image) is generated `{k(t) | t in T}`.
 
 Then, for each object `t in T` a label `k(t)` is sampled from distribution `p(k(t) | k(N(t)))`.
-This step is repeated while labeling changes or while a given number of iterations is not done.
+This step is repeated while not more than `changes_threshold`% have changed
+after the iteration of Gibbs sampling.
 
 ## Getting result
 
-After some number of iterations we memorize the result of each `n`th iteration.
+After some number of iterations, we memorize the result of each `n`th iteration.
 Then the most common color is defined for each pixel.
 It would be a result.
 
@@ -110,3 +111,4 @@ To test some functions without using random numbers run
 ```bash
 pytest
 ```
+from the `test` directory.
