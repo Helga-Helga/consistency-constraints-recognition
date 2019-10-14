@@ -21,18 +21,22 @@ from image_generation import (
 
 
 def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
+    """
+    Returns image of the most common colors occured in the labeling
+    """
     height, width = sums_of_zero_labels.shape
     labeling = zeros(shape=(height, width))
     for i in range(height):
         for j in range(width):
-            if sums_of_zero_labels[i][j] > sums_of_unit_labels[i][j]:
-                labeling[i][j] = 0
-            else:
-                labeling[i][j] = 1
+            labeling[i][j] = int(
+                sums_of_zero_labels[i, j] <= sums_of_unit_labels[i, j])
     return labeling
 
 
-def gibbs_iteration(labeling, height, width, iteration, epsilon):
+def gibbs_iteration(labeling, height, width, epsilon, beta):
+    """
+    One iteration of Gibbs sampler
+    """
     for i in range(height):
         for j in range(width):
             sum_zero_edges = 0
@@ -54,6 +58,9 @@ def gibbs_iteration(labeling, height, width, iteration, epsilon):
 
 
 def almost_equal_labelings(labeling1, labeling2, error_rate):
+    """
+    Returns True if there are not more than error_rate% of mismatching pixels
+    """
     height, width = labeling1.shape
     max_errors = height * width * error_rate / 100
     current_errors = 0
@@ -63,6 +70,7 @@ def almost_equal_labelings(labeling1, labeling2, error_rate):
                 current_errors += 1
             if current_errors > max_errors:
                 return False
+        print(current_errors)
     return True
 
 
@@ -73,34 +81,40 @@ def gibbs_sampling(initial_image, noised_image,
     labeling = random.randint(2, size=(height, width))  # U{0, 1}
     sums_of_zero_labels = zeros(shape=(height, width))
     sums_of_unit_labels = zeros(shape=(height, width))
-    for iteration in range(iterations):
-        labeling_prev = labeling.copy()
-        labeling = gibbs_iteration(labeling, height, width, iteration, epsilon)
-        if iteration > save_after and iteration % save_step == 0:
-            sums_of_zero_labels += labeling ^ 1
-            sums_of_unit_labels += labeling
-        if almost_equal_labelings(labeling_prev, labeling, 5):
-            break
-        print(iteration)
+    iteration = 0
+    try:
+        while True:
+            iteration += 1
+            labeling_prev = labeling.copy()
+            labeling = gibbs_iteration(labeling, height, width, epsilon, beta)
+            if iteration > 5 and iteration % 2 == 0:
+                # Save labeling
+                sums_of_zero_labels += labeling ^ 1
+                sums_of_unit_labels += labeling
+            # Break iterations when not more than 5% of pixels have changed
+            if almost_equal_labelings(labeling_prev, labeling, 5):
+                break
+            print("Iteration # {}".format(iteration))
+    except KeyboardInterrupt:
+        pass
     result = get_labeling(sums_of_zero_labels, sums_of_unit_labels)
     imsave('images/labeling.png', labeling, cmap=gray)
     print("Resulting image is saved to \"images/labeling.png\"")
     return labeling
 
 
-def count_errors(image, noised_image, labeling):
+def count_errors(image, labeling):
+    """
+    Counts number of mismatching pixels in the initial image and labeling
+    """
     errors = 0
-    noised_errors = 0
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             if image[i][j] != labeling[i][j]:
                 errors += 1
-            if noised_image[i][j] != labeling[i][j]:
-                noised_errors += 1
     percent = 100 * errors / (image.shape[0] * image.shape[1])
     print("Number of incorrectly recognized pixels: {}, it is {}% of image"
           .format(errors, percent))
-    print("Number of errors from noised image: {}".format(noised_errors))
 
 
 if __name__ == "__main__":
@@ -120,3 +134,4 @@ if __name__ == "__main__":
     noised_image = add_noise(initial_image, epsilon)
 
     labeling = gibbs_sampling(initial_image, noised_image, epsilon, beta_gibbs)
+    count_errors(initial_image, labeling)
