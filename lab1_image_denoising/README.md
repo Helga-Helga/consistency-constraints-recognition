@@ -106,8 +106,7 @@ It would be a result.
 
 ## Testing
 
-To test some functions run
+To test some functions without using random numbers run
 ```bash
 pytest
 ```
-from `test/` directory.
