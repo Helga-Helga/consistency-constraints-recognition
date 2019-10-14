@@ -28,7 +28,7 @@ def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
     labeling = zeros(shape=(height, width))
     for i in range(height):
         for j in range(width):
-            labeling[i][j] = int(
+            labeling[i, j] = int(
                 sums_of_zero_labels[i, j] <= sums_of_unit_labels[i, j])
     return labeling
 
@@ -109,7 +109,7 @@ def count_errors(image, labeling):
     errors = 0
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
-            if image[i][j] != labeling[i][j]:
+            if image[i, j] != labeling[i, j]:
                 errors += 1
     percent = 100 * errors / (image.shape[0] * image.shape[1])
     print("Number of incorrectly recognized pixels: {}, it is {}% of image"
