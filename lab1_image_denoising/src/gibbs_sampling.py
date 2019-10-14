@@ -67,8 +67,7 @@ def almost_equal_labelings(labeling1, labeling2, error_rate):
 
 
 def gibbs_sampling(initial_image, noised_image,
-                   epsilon, beta,
-                   iterations, save_after, save_step):
+                   epsilon, beta):
     print("Image denoising with Gibbs sampler...")
     height, width = initial_image.shape
     labeling = random.randint(2, size=(height, width))  # U{0, 1}
@@ -107,19 +106,17 @@ def count_errors(image, noised_image, labeling):
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('config.ini')
-    beta = float(config['EDGE_WEIGHT']['beta'])
+    beta_image = float(config['EDGE_WEIGHT']['beta_image'])
+    beta_gibbs = float(config['EDGE_WEIGHT']['beta_gibbs'])
     image_height = int(config['IMAGE_SIZE']['height'])
     image_width = int(config['IMAGE_SIZE']['width'])
     iterations_for_image_generation = int(
         config['ITERATIONS']['iterations_for_image'])
+
     initial_image = sample_input_image(
-        image_height, image_width, beta, iterations_for_image_generation)
+        image_height, image_width, beta_image, iterations_for_image_generation)
+
     epsilon = float(config['NOISE_LEVEL']['epsilon'])
     noised_image = add_noise(initial_image, epsilon)
-    iterations_for_gibbs = int(config['ITERATIONS']['iterations_for_gibbs'])
-    save_after = int(config['ITERATIONS']['save_after'])
-    save_step = int(config['iterations']['save_step'])
-    labeling = gibbs_sampling(initial_image, noised_image,
-                              epsilon, beta,
-                              iterations_for_gibbs, save_after, save_step)
-    count_errors(initial_image, noised_image, labeling)
+
+    labeling = gibbs_sampling(initial_image, noised_image, epsilon, beta_gibbs)
