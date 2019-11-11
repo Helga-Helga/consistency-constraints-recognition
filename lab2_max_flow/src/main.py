@@ -5,7 +5,11 @@ import matplotlib.image as mpimg
 import matplotlib.gridspec as gridspec
 
 from utils import rgb2gray
-from noise import add_laplacian_noise
+from noise import (
+    add_laplacian_noise,
+    add_gaussian_noise,
+    add_salt_and_pepper_noise
+)
 
 if len(sys.argv) > 1:
     image_path = sys.argv[1]
@@ -18,15 +22,28 @@ else:
 
 
 fig = plt.figure()
-spec = fig.add_gridspec(ncols=2, nrows=1)
+spec = fig.add_gridspec(ncols=3, nrows=2)
 
-ax_original_image = fig.add_subplot(spec[0, 0])
+ax_original_image = fig.add_subplot(spec[:-1, :])
+ax_original_image.set_title('Original image')
 ax_original_image.imshow(input_image, cmap=plt.get_cmap('gray'))
 
-ax_laplacian = fig.add_subplot(spec[0, 1])
-ax_laplacian.imshow(add_laplacian_noise(input_image), cmap=plt.get_cmap('gray'))
+ax_laplacian = fig.add_subplot(spec[1, 0])
+ax_laplacian.set_title('Laplacian noise')
+ax_laplacian.imshow(add_laplacian_noise(input_image, 0, 10),
+                    cmap=plt.get_cmap('gray'))
 
-for ax in [ax_original_image, ax_laplacian]:
+ax_gaussian = fig.add_subplot(spec[1, 1])
+ax_gaussian.set_title('Gaussian noise')
+ax_gaussian.imshow(add_gaussian_noise(input_image, 0, 10),
+                   cmap=plt.get_cmap('gray'))
+
+ax_salt_pepper = fig.add_subplot(spec[1, 2])
+ax_salt_pepper.set_title('Salt-and-pepper noise')
+ax_salt_pepper.imshow(add_salt_and_pepper_noise(input_image, 0.05),
+                      cmap=plt.get_cmap('gray'))
+
+for ax in [ax_original_image, ax_laplacian, ax_gaussian, ax_salt_pepper]:
     ax.set_axis_off()
 
 plt.show()
