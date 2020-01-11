@@ -12,7 +12,7 @@ Specify all parameters in `config.ini` file.
 From the parent directory run
 
 ```bash
-python gibbs_sampling.py
+python src/gibbs_sampling.py
 ```
 
 Deactivate the environment using
@@ -104,6 +104,16 @@ after the iteration of Gibbs sampling.
 After some number of iterations, we memorize the result of each `n`th iteration.
 Then the most common color is defined for each pixel.
 It would be a result.
+
+## Maximum flow
+
+Graph of the next form is constructed
+
+![maxflow graph](images/maxflow_graph.png)
+
+here number of pixels is `2`.
+But actually there should be a green node for each pixel of image.
+Then, using pymaxflow library, the best labeling is found.
 
 ## Testing
 
