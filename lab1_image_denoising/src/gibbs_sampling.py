@@ -10,8 +10,9 @@ from numpy import (
     zeros,
     int_,
     logical_not,
+    asarray,
+    reshape,
 )
-
 from image_generation import (
     sample_input_image,
     add_noise,
@@ -22,6 +23,7 @@ from utils import (
     neighbor_exists,
     get_neighbor_coordinate,
 )
+from PIL import Image
 
 
 def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
@@ -197,6 +199,21 @@ def count_errors(image, labeling):
           .format(errors, percent))
 
 
+def calculate_energy(labeling, noised_image, psilon, beta):
+    energy = 0
+    height, width = labeling.shape
+    for i in range(height):
+        for j in range(width):
+            energy += node_weight(labeling[i, j], noised_image[i, j], epsilon)
+            for n in range(4):
+                if neighbor_exists(height, width, i, j, n):
+                    i_n, j_n = get_neighbor_coordinate(i, j, n)
+                    energy += edge_weight(
+                        labeling[i, j], labeling[i_n, j_n], beta
+                    )
+    return energy
+
+
 def maxflow_image_restoration(noised_image, beta, epsilon):
     """Simple maxflow binary image restoration
 
@@ -211,10 +228,10 @@ def maxflow_image_restoration(noised_image, beta, epsilon):
         Restored image
     """
     # Create the graph
-    g = maxflow.Graph[int]()
+    g = maxflow.Graph[float]()
     # Add the nodes. nodeids has the identifiers of the nodes in the grid
-    nodeids = g.add_grid_nodes(noised_image.shape)
     height, width = noised_image.shape
+    nodeids = g.add_grid_nodes((height, width))
     for i in range(height):
         for j in range(width):
             for n in range(4):
@@ -234,8 +251,8 @@ def maxflow_image_restoration(noised_image, beta, epsilon):
                         node_weight(1, noised_image[i, j], epsilon))
     # Find the maximum flow
     g.maxflow()
-    # Get the segments of the nodes in the grid
     sgm = g.get_grid_segments(nodeids)
+    # Get the segments of the nodes in the grid
     # The labels should be 1 where sgm is False and 0 otherwise
     resulting_image = int_(logical_not(sgm))
     return resulting_image
@@ -253,6 +270,7 @@ if __name__ == "__main__":
 
     initial_image = sample_input_image(
         image_height, image_width, beta_image, iterations_for_image_generation)
+    # initial_image = asarray(Image.open("images/zebra_scaled.jpeg").convert('L'))
 
     epsilon = float(config['NOISE_LEVEL']['epsilon'])
     noised_image = add_noise(initial_image, epsilon)
@@ -261,11 +279,13 @@ if __name__ == "__main__":
     labeling = gibbs_sampling(initial_image, noised_image,
                               epsilon, beta_gibbs,
                               changes_threshold)
+    print("Gibbs energy : ", calculate_energy(labeling, noised_image, epsilon, beta_gibbs))
     count_errors(initial_image, labeling)
 
     maxflow_result = maxflow_image_restoration(
         noised_image, beta_gibbs, epsilon
     )
+    print("MaxFlow energy : ", calculate_energy(maxflow_result, noised_image, epsilon, beta_gibbs))
 
     fig = plt.figure()
     spec = fig.add_gridspec(ncols=4, nrows=1)
@@ -273,7 +293,6 @@ if __name__ == "__main__":
     ax_original_image = fig.add_subplot(spec[0, 0])
     ax_original_image.set_title('Generated image')
     ax_original_image.imshow(initial_image, cmap=plt.get_cmap('gray'))
-    # plt.imsave("initial_image.png", initial_image, cmap=plt.get_cmap('gray'))
 
     ax_noised_image = fig.add_subplot(spec[0, 1])
     ax_noised_image.set_title('Noised image')
@@ -282,7 +301,6 @@ if __name__ == "__main__":
     ax_gibbs = fig.add_subplot(spec[0, 2])
     ax_gibbs.set_title('After Gibbs sampling')
     ax_gibbs.imshow(labeling, cmap=plt.get_cmap('gray'))
-    # plt.imsave("result.png", initial_image, cmap=plt.get_cmap('gray'))
 
     ax_maxflow = fig.add_subplot(spec[0, 3])
     ax_maxflow.set_title('After maxflow')

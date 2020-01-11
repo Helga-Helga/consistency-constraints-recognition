@@ -9,8 +9,8 @@ verify_ssl = true
 pytest = "*"
 numpy = "*"
 matplotlib = "*"
-maxflow = "*"
 pymaxflow = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.6"

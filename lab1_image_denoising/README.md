@@ -115,6 +115,10 @@ here number of pixels is `2`.
 But actually there should be a green node for each pixel of image.
 Then, using pymaxflow library, the best labeling is found.
 
+## Example of result
+
+![example of result](images/example_of_result.jpeg)
+
 ## Testing
 
 To test some functions without using random numbers run
