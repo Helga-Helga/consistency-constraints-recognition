@@ -197,7 +197,7 @@ def count_errors(image, labeling):
           .format(errors, percent))
 
 
-def maxflow_image_restoration(noised_image):
+def maxflow_image_restoration(noised_image, beta, epsilon):
     """Simple maxflow binary image restoration
 
     Parameters
@@ -214,12 +214,24 @@ def maxflow_image_restoration(noised_image):
     g = maxflow.Graph[int]()
     # Add the nodes. nodeids has the identifiers of the nodes in the grid
     nodeids = g.add_grid_nodes(noised_image.shape)
-    # Add non-terminal edges with the same capacity
-    g.add_grid_edges(nodeids, 1)
-    # Add the terminal edges. The image pixels are the capacities
-    # of the edges from the source node. The inverted image pixels
-    # are the capacities of the edges to the sink node
-    g.add_grid_tedges(nodeids, noised_image, 1 - noised_image)
+    height, width = noised_image.shape
+    for i in range(height):
+        for j in range(width):
+            for n in range(4):
+                if neighbor_exists(height, width, i, j, n):
+                    i_n, j_n = get_neighbor_coordinate(i, j, n)
+                    weight = edge_weight(
+                        noised_image[i, j], noised_image[i_n, j_n], beta
+                    )
+                    # Add non-terminal edges
+                    g.add_edge(
+                        nodeids[i, j], nodeids[i_n, j_n],
+                        weight, weight
+                    )
+            # Add terminal edges
+            g.add_tedge(nodeids[i, j],
+                        node_weight(0, noised_image[i, j], epsilon),
+                        node_weight(1, noised_image[i, j], epsilon))
     # Find the maximum flow
     g.maxflow()
     # Get the segments of the nodes in the grid
@@ -251,7 +263,9 @@ if __name__ == "__main__":
                               changes_threshold)
     count_errors(initial_image, labeling)
 
-    maxflow_result = maxflow_image_restoration(noised_image)
+    maxflow_result = maxflow_image_restoration(
+        noised_image, beta_gibbs, epsilon
+    )
 
     fig = plt.figure()
     spec = fig.add_gridspec(ncols=4, nrows=1)
@@ -259,6 +273,7 @@ if __name__ == "__main__":
     ax_original_image = fig.add_subplot(spec[0, 0])
     ax_original_image.set_title('Generated image')
     ax_original_image.imshow(initial_image, cmap=plt.get_cmap('gray'))
+    # plt.imsave("initial_image.png", initial_image, cmap=plt.get_cmap('gray'))
 
     ax_noised_image = fig.add_subplot(spec[0, 1])
     ax_noised_image.set_title('Noised image')
@@ -267,6 +282,7 @@ if __name__ == "__main__":
     ax_gibbs = fig.add_subplot(spec[0, 2])
     ax_gibbs.set_title('After Gibbs sampling')
     ax_gibbs.imshow(labeling, cmap=plt.get_cmap('gray'))
+    # plt.imsave("result.png", initial_image, cmap=plt.get_cmap('gray'))
 
     ax_maxflow = fig.add_subplot(spec[0, 3])
     ax_maxflow.set_title('After maxflow')

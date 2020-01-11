@@ -34,8 +34,6 @@ def add_noise(image, epsilon):
         for j in range(image.shape[1]):
             if random.uniform() < epsilon:  # U[0, 1]
                 noised_image[i, j] = 1 - image[i, j]
-    imsave('images/noised_image.png', noised_image, cmap=gray)
-    print("Noised image is saved to \"images/noised_image.png\"")
     return noised_image
 
 
@@ -72,8 +70,6 @@ def sample_input_image(height, width, beta, iterations):
                         unit_weight += edge_weight(1, image[i_n, j_n], beta)
                 t = exp(-zero_weight) / (exp(-zero_weight) + exp(-unit_weight))
                 image[i, j] = int(random.uniform() >= t)  # U [0, 1]
-    imsave('images/input_image.png', image, cmap=gray)
-    print("Generated image is saved to \"images/input_image.png\"")
     return image
 
 
