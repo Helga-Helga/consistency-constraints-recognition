@@ -1,28 +1,48 @@
 import configparser
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import matplotlib.gridspec as gridspec
+import maxflow
 
 from numpy import (
     random,
     exp,
     zeros,
+    int_,
+    logical_not,
 )
-from matplotlib.pyplot import imsave
-from matplotlib.cm import gray
 
+from image_generation import (
+    sample_input_image,
+    add_noise,
+)
 from utils import (
     node_weight,
     edge_weight,
     neighbor_exists,
     get_neighbor_coordinate,
 )
-from image_generation import (
-    sample_input_image,
-    add_noise,
-)
 
 
 def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
-    """
-    Returns image of the most common colors occured in the labeling
+    """Returns image of the most common colors occured in the labeling
+
+    Parameters
+    ----------
+    sums_of_zero_labels: matrix of unsigned int values
+        Matrix with image shape where cell (i, j)
+        contains how many times this cell had value 0 in labeling
+        during iterations of Gibbs sampler
+    sums_of_unit_labels: matrix of unsigned int values
+        Matrix with image shape where cell (i, j)
+        contains how many times this cell had value 1 in labeling
+        during iterations of Gibbs sampler
+
+    Returns
+    -------
+    matrix of binary values
+        Returns image of the most common colors occured in the labeling
+        during Gibbs sampler iterations
     """
     height, width = sums_of_zero_labels.shape
     labeling = zeros(shape=(height, width))
@@ -34,8 +54,25 @@ def get_labeling(sums_of_zero_labels, sums_of_unit_labels):
 
 
 def gibbs_iteration(labeling, height, width, epsilon, beta):
-    """
-    One iteration of Gibbs sampler
+    """One iteration of Gibbs sampler
+
+    Parameters
+    ----------
+    labeling: matrix of image size with binary values
+        Current labeling
+    height: unsigned int
+        Image height
+    widht: unsigned int
+        Image width
+    epsilon: number
+        Noise level
+    beta: number
+        Weight of edge if its labels differ
+
+    Returns
+    -------
+    matrix of image size with binary values
+        Updated labeling
     """
     for i in range(height):
         for j in range(width):
@@ -58,9 +95,23 @@ def gibbs_iteration(labeling, height, width, epsilon, beta):
 
 
 def almost_equal_labelings(labeling1, labeling2, changes_threshold):
-    """
-    Returns True if there are not more than
+    """Returns True if there are not more than
     changes_threshold% of mismatching pixels
+
+    Parameters
+    ----------
+    labeling1: matrix of binary values of image size
+        Labeling
+    labeling2: matrix of binary values of image size
+        Labeling from neighbor iteration of Gibbs sampler
+    changes_threshold: number
+        Percent of maximum number of mismatching pixels to consider
+        the givel labelings almost equal
+
+    Returns
+    -------
+    True or False
+        Are the given labelings almost equal
     """
     height, width = labeling1.shape
     max_errors = height * width * changes_threshold / 100
@@ -77,6 +128,27 @@ def almost_equal_labelings(labeling1, labeling2, changes_threshold):
 def gibbs_sampling(initial_image, noised_image,
                    epsilon, beta,
                    changes_threshold):
+    """Gibbs sampling algorithm implementation
+
+    Parameters
+    ----------
+    initial_image: matrix of binary values
+        Generated image
+    noised_image: matrix of binary values
+        Generated image after applying noise
+    epsilon: number
+        Noise level
+    beta: number
+        Weight of edge if its labels differ
+    changes_threshold: number
+        Percent of maximum number of mismatching pixels to consider
+        the givel labelings almost equal
+
+    Returns
+    -------
+    matrix of binary values
+        Labeling as a reconstructed image
+    """
     print("Image denoising with Gibbs sampler...")
     height, width = initial_image.shape
     labeling = random.randint(2, size=(height, width))  # U{0, 1}
@@ -97,14 +169,23 @@ def gibbs_sampling(initial_image, noised_image,
             break
         print("Iteration # {}".format(iteration))
     result = get_labeling(sums_of_zero_labels, sums_of_unit_labels)
-    imsave('images/labeling.png', labeling, cmap=gray)
-    print("Resulting image is saved to \"images/labeling.png\"")
     return labeling
 
 
 def count_errors(image, labeling):
-    """
-    Counts number of mismatching pixels in the initial image and labeling
+    """Counts number of mismatching pixels in the initial image and labeling
+
+    Parameters
+    ----------
+    image: matrix of binary values
+        Initial (generated) image
+    labeling: matrix of binary values
+        Reconstructed image using Gibbs sampler
+
+    Returns
+    -------
+    integer
+        Number of incorrectly recognized pixels
     """
     errors = 0
     for i in range(image.shape[0]):
@@ -114,6 +195,38 @@ def count_errors(image, labeling):
     percent = 100 * errors / (image.shape[0] * image.shape[1])
     print("Number of incorrectly recognized pixels: {}, it is {}% of image"
           .format(errors, percent))
+
+
+def maxflow_image_restoration(noised_image):
+    """Simple maxflow binary image restoration
+
+    Parameters
+    ----------
+    noised_image: matrix of binary values
+        Generated image after noising
+
+    Returns
+    -------
+    matrix of binary values
+        Restored image
+    """
+    # Create the graph
+    g = maxflow.Graph[int]()
+    # Add the nodes. nodeids has the identifiers of the nodes in the grid
+    nodeids = g.add_grid_nodes(noised_image.shape)
+    # Add non-terminal edges with the same capacity
+    g.add_grid_edges(nodeids, 1)
+    # Add the terminal edges. The image pixels are the capacities
+    # of the edges from the source node. The inverted image pixels
+    # are the capacities of the edges to the sink node
+    g.add_grid_tedges(nodeids, noised_image, 1 - noised_image)
+    # Find the maximum flow
+    g.maxflow()
+    # Get the segments of the nodes in the grid
+    sgm = g.get_grid_segments(nodeids)
+    # The labels should be 1 where sgm is False and 0 otherwise
+    resulting_image = int_(logical_not(sgm))
+    return resulting_image
 
 
 if __name__ == "__main__":
@@ -137,3 +250,29 @@ if __name__ == "__main__":
                               epsilon, beta_gibbs,
                               changes_threshold)
     count_errors(initial_image, labeling)
+
+    maxflow_result = maxflow_image_restoration(noised_image)
+
+    fig = plt.figure()
+    spec = fig.add_gridspec(ncols=4, nrows=1)
+
+    ax_original_image = fig.add_subplot(spec[0, 0])
+    ax_original_image.set_title('Generated image')
+    ax_original_image.imshow(initial_image, cmap=plt.get_cmap('gray'))
+
+    ax_noised_image = fig.add_subplot(spec[0, 1])
+    ax_noised_image.set_title('Noised image')
+    ax_noised_image.imshow(noised_image, cmap=plt.get_cmap('gray'))
+
+    ax_gibbs = fig.add_subplot(spec[0, 2])
+    ax_gibbs.set_title('After Gibbs sampling')
+    ax_gibbs.imshow(labeling, cmap=plt.get_cmap('gray'))
+
+    ax_maxflow = fig.add_subplot(spec[0, 3])
+    ax_maxflow.set_title('After maxflow')
+    ax_maxflow.imshow(maxflow_result, cmap=plt.get_cmap('gray'))
+
+    for ax in [ax_original_image, ax_noised_image, ax_gibbs, ax_maxflow]:
+        ax.set_axis_off()
+
+    plt.show()

@@ -14,6 +14,20 @@ from utils import (
 
 
 def add_noise(image, epsilon):
+    """Adding noise to image by inverting pixels
+
+    Parameters
+    ----------
+    image: matrix of binary values
+        Initial image
+    epsilon: number from [0, 1]
+        Probability of inverting a pixel
+
+    Returns
+    -------
+    matrix of binary values
+        Noised image
+    """
     print("Adding noise with epsilon =", epsilon)
     noised_image = image.copy()
     for i in range(image.shape[0]):
@@ -26,6 +40,24 @@ def add_noise(image, epsilon):
 
 
 def sample_input_image(height, width, beta, iterations):
+    """Generation of image using Gibbs sampler
+
+    Parameters
+    ----------
+    height: unsigned integer
+        Image height
+    widht: unsigned integer
+        Image width
+    beta: number
+        Weight of edge if its labels differ
+    iterations: unsigned integer
+        Number of iterations of image generation
+
+    Retunrs
+    -------
+    matrix of binary values of size (height, width)
+        Generated binary image
+    """
     print("Generating input image", height, "x", width)
     image = random.randint(2, size=(height, width))  # U{0, 1}
     for iteration in range(iterations):
