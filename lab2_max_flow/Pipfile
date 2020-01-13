@@ -6,8 +6,9 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-matplotlib = "*"
 pillow = "*"
+pymaxflow = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.6"
