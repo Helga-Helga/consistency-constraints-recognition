@@ -73,13 +73,13 @@ class MaxFlowGraph():
                         b = self.edge_weight(self.alpha, k_n)
                         c = self.edge_weight(k, self.alpha)
                         d = self.edge_weight(self.alpha, self.alpha)
-                        self.nodes[i, j, 1] += d - c
-                        self.nodes[i_n, j_n, 0] += a
-                        self.nodes[i_n, j_n, 1] += c
+                        self.nodes[i, j, 1] = d - c
+                        self.nodes[i_n, j_n, 0] = a
+                        self.nodes[i_n, j_n, 1] = c
                         self.edges[i, j, n, 0, 0] = 0
                         self.edges[i, j, n, 0, 1] = 0
                         self.edges[i, j, n, 1, 1] = 0
-                        self.edges[i, j, n, 1, 0] += b + c - a - d
+                        self.edges[i, j, n, 1, 0] = b + c - a - d
 
     def update_labeling(self, segments):
         """Update image after maxflow
@@ -128,9 +128,8 @@ class MaxFlowGraph():
         list_of_labels = [k for k in range(256)]
         while len(self.list_of_labels) > 0:
             self.get_random_alpha()
-            print("Current alpha : ", self.alpha, ". ", len(self.list_of_labels), "alphas left")
+            print("Current alpha ", self.alpha, ".", len(self.list_of_labels), "alphas left")
             self.alpha_expansion_step()
-            print(self.labeling)
 
     def alpha_expansion(self, number_of_iterations):
         """Perform iterations of alpha-expansion
@@ -140,7 +139,8 @@ class MaxFlowGraph():
         number_of_iterations: unsigned integer
             Number of iterations
         """
-        for _ in range(number_of_iterations):
+        for i in range(number_of_iterations):
+            print("Iteration", i + 1, "of", number_of_iterations)
             self.alpha_expansion_iteration()
 
     def edge_weight(self, label1, label2):
