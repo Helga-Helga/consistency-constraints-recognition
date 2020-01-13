@@ -3,7 +3,10 @@ from numpy.random import (
     normal,
     random
 )
-from numpy import clip
+from numpy import (
+    clip,
+    array,
+)
 
 
 def add_laplacian_noise(image, loc=0.0, scale=1.0):
@@ -26,7 +29,7 @@ def add_laplacian_noise(image, loc=0.0, scale=1.0):
         Image with Laplacian noise
     """
     noise = laplace(loc, scale, image.shape)
-    return clip(image + noise, 0, 255)
+    return array(clip(image + noise, 0, 255), dtype=int)
 
 
 def add_gaussian_noise(image, loc=0.0, scale=1.0):
@@ -47,7 +50,7 @@ def add_gaussian_noise(image, loc=0.0, scale=1.0):
         Image with Gaussian noise
     """
     noise = normal(loc, scale, image.shape)
-    return clip(image + noise, 0, 255)
+    return array(clip(image + noise, 0, 255), dtype=int)
 
 
 def add_salt_and_pepper_noise(image, probability):
