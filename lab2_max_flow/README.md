@@ -1,4 +1,4 @@
-# Greyscale image denoising with max flow
+# Grayscale image denoising with max flow
 
 ## How to use
 
@@ -35,7 +35,7 @@ Possible noise types:
 
 ## Problem formulation
 
-For some greyscale images apply:
+For some grayscale images apply:
 * Laplacian noise
 * Gaussian noise
 * Salt-and-pepper noise
@@ -65,4 +65,4 @@ It a node is not on the image edge, it has 4 neighbors:
 A set of neighbors of node `t` is `N(t)`.
 
 Each node has `256` labels that are correspondent to colors on
-the greyscale image.
+the grayscale image.
