@@ -41,11 +41,10 @@ On the resulted image solve `(max, +)` problem with the next weight functions:
 ![Alt text](images/weight_functions.png)
 
 where
-* `k(t) ∈ [0, 255]` is an intensity of pixel `t` of the initial image
+* `k(t) ∈ [0, 255]` is a label of pixel `t` from the last iteration. For the first iteration it is an intensity of pixel `t` of the noised image
 * `x(t) ∈ [0, 255]` is an intensity of pixel `t` of the noised image
 
-Convert the problem into `(max, +)` problem with two labels and
-apply the max flow algorithm for its solution.
+Use α-expansion to "convert" the problem into `(max, +)` problem with two labels and apply the max flow algorithm for its solution.
 
 ## Grid graph
 
