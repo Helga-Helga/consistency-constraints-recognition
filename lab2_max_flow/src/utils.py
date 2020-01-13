@@ -1,62 +1,75 @@
-from numpy import dot
+from numpy import (
+    dot,
+    zeros,
+    reshape,
+    where,
+    array,
+    clip,
+)
+
+lookup_table = zeros((256, 256))
+for i in range(256):
+    for j in range(256):
+        lookup_table[i, j] = (i - j) ** 2
 
 
-def rgb2gray(image):
-    """Convertion of 3D RGB image to 2D greyscale
+def neighbor_exists(i, j, neighbor_index, height, width):
+    """Returns True if a given neighbor exists for a given pixel
 
     Parameters
     ----------
-    image : numpy 2D array
-        Input image
+    i: unsigned integer
+        Vertical coordinate of a pixel
+    j: unsigned integer
+        Horizontal coordinate of a pixel
+    neighbor_index: belongs to {0, 1, 2, 3}
+        Index of a neighbor
+    height: unsigned integer
+        Image height
+    width: unsigned integer
+        Image width
 
     Returns
     -------
-    numpy 2D array
-        Greyscale image
+    True of False
+        Result depends on existence of a given neighbor
     """
-    if len(image.shape) > 2:
-        return dot(
-            image[..., :3], [0.2989, 0.5870, 0.1140]
-        ).round().astype(int)
+    if neighbor_index == 0 and j > 0:
+        return True
+    elif neighbor_index == 1 and i > 0:
+        return True
+    elif neighbor_index == 2 and j + 1 < width:
+        return True
+    elif neighbor_index == 3 and i + 1 < height:
+        return True
     else:
-        return image
+        return False
 
 
-def edge_weight(label1, label2, L, S):
-    """Computing of edge weight between two labels for initial problem
-
-    Parameters
-    ----------
-    label1: int
-        Intensity of one object (pixel)
-    label2: int
-        Intensity of other object
-    L: float
-        Scale factor
-    S: float
-        Parameter similar to deviation
-
-    Returns
-    -------
-    float
-        Edge weight
-    """
-    return L * log(1 + (label1 - label2).pow(2) / (2 * S.pow(2)))
-
-
-def node_weight(label, noised_color):
-    """Computing of node weight for the given label in object
+def get_neighbor_coordinate(i, j, neighbor_number):
+    """Calculate coordinate of a given neighbor for a given pixel
 
     Parameters
     ----------
-    label: int
-        Intensity of the pixel in initial image
-    noised_color: int
-        Intensity of the pixel in noised image
+    i: unsigned integer
+        Vertical coordinate of a pixel
+    j:  unsigned integer
+        Horizontal coordinate of a pixel
+    neighbor_number: number from {0, 1, 2, 3}
+        Neighbor index
 
     Returns
     -------
-    int
-        Node weight
+    tuple of unsigned integers
+        Coordinated of neighbor
     """
-    return (label - noised_color).pow(2)
+    if neighbor_number == 0:
+        return i, j - 1
+    elif neighbor_number == 1:
+        return i - 1, j
+    elif neighbor_number == 2:
+        return i, j + 1
+    elif neighbor_number == 3:
+        return i + 1, j
+    else:
+        return None, None
