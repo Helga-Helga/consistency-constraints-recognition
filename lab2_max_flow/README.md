@@ -26,6 +26,13 @@ Deactivate the environment using
 exit
 ```
 
+Use `config.ini` file to set parameters such as number of iterations, noise parameters, parameters for calculating edge weight.
+
+Possible noise types:
+* `G` for Gaussian noise
+* `L` for Laplacian noise
+* `SP` for Salt and Pepper noise
+
 ## Problem formulation
 
 For some greyscale images apply:
