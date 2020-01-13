@@ -21,14 +21,13 @@ import matplotlib.pyplot as plt
 
 
 class MaxFlowGraph():
-    def __init__(self, L, S, beta, image):
+    def __init__(self, L, S, image):
         self.L = L
         self.S = S
-        self.beta = beta
         self.image = image
+        self.labeling = image
         self.height = image.shape[0]
         self.width = image.shape[1]
-        self.added = full((image.shape[0], image.shape[1]), False)
         self.nodes = zeros((image.shape[0], image.shape[1], 2))
         self.edges = zeros((image.shape[0], image.shape[1], 4, 2, 2))
         self.alpha = -1
@@ -48,13 +47,13 @@ class MaxFlowGraph():
         self.edges = zeros((self.height, self.width, 4, 2, 2))
         for i in range(self.height):
             for j in range(self.width):
-                k = self.image[i, j]
-                self.nodes[i, j, 0] += self.node_weight(k, k)
-                self.nodes[i, j, 1] += self.node_weight(k, self.alpha)
+                k = self.labeling[i, j]
+                self.nodes[i, j, 0] = self.node_weight(self.image[i, j], k)
+                self.nodes[i, j, 1] = self.node_weight(self.image[i, j], self.alpha)
                 for n in range(4):
                     if neighbor_exists(i, j, n, self.height, self.width):
                         i_n, j_n = get_neighbor_coordinate(i, j, n)
-                        k_n = self.image[i_n, j_n]
+                        k_n = self.labeling[i_n, j_n]
                         self.edges[i_n, j_n, n, 0, 1] = self.edge_weight(k, self.alpha)
                         self.edges[i_n, j_n, n, 1, 0] = self.edge_weight(self.alpha, k_n)
                         self.edges[i_n, j_n, n, 0, 0] = self.edge_weight(k, k_n)
@@ -65,11 +64,11 @@ class MaxFlowGraph():
         """
         for i in range(self.height):
             for j in range(self.width):
-                k = self.image[i, j]
+                k = self.labeling[i, j]
                 for n in range(4):
                     if neighbor_exists(i, j, n, self.height, self.width):
                         i_n, j_n = get_neighbor_coordinate(i, j, n)
-                        k_n = self.image[i_n, j_n]
+                        k_n = self.labeling[i_n, j_n]
                         a = self.edge_weight(k, k_n)
                         b = self.edge_weight(self.alpha, k_n)
                         c = self.edge_weight(k, self.alpha)
@@ -78,11 +77,11 @@ class MaxFlowGraph():
                         self.nodes[i_n, j_n, 0] += a
                         self.nodes[i_n, j_n, 1] += c
                         self.edges[i, j, n, 0, 0] = 0
-                        self.edges[i, j, n, 0, 0] = 0
+                        self.edges[i, j, n, 0, 1] = 0
                         self.edges[i, j, n, 1, 1] = 0
-                        self.edges[i, j, n, 1, 0] = b + c - a - d
+                        self.edges[i, j, n, 1, 0] += b + c - a - d
 
-    def update_image(self, segments):
+    def update_labeling(self, segments):
         """Update image after maxflow
 
         Parameters
@@ -93,7 +92,7 @@ class MaxFlowGraph():
         for i in range(self.height):
             for j in range(self.width):
                 if int_(logical_not(segments[i, j])) == 1:
-                    self.image[i, j] = self.alpha
+                    self.labeling[i, j] = self.alpha
 
     def alpha_expansion_step(self):
         """Solve maxflow problem for 2-labeled graph with chosen alpha
@@ -101,7 +100,7 @@ class MaxFlowGraph():
         self.calculate_weights_of_two_label_graph()
         self.update_weights_of_two_label_graph()
         # Create the graph
-        g = maxflow.Graph[int]()
+        g = maxflow.Graph[float]()
         # Add the nodes. nodeids has the identifiers of the nodes in the grid
         nodeids = g.add_grid_nodes((self.height, self.width))
         for i in range(self.height):
@@ -112,7 +111,7 @@ class MaxFlowGraph():
                         # Add non-terminal edges
                         g.add_edge(
                             nodeids[i, j], nodeids[i_n, j_n],
-                            self.edges[i, j, n, 0, 1], 0
+                            self.edges[i, j, n, 0, 1], self.edges[i, j, n, 1, 0]
                         )
                 # Add terminal edges
                 g.add_tedge(nodeids[i, j],
@@ -121,7 +120,7 @@ class MaxFlowGraph():
         # Find the maximum flow
         g.maxflow()
         segments = g.get_grid_segments(nodeids)
-        self.update_image(segments)
+        self.update_labeling(segments)
 
     def alpha_expansion_iteration(self):
         """Solve maxflow problem for all alphas
@@ -129,9 +128,9 @@ class MaxFlowGraph():
         list_of_labels = [k for k in range(256)]
         while len(self.list_of_labels) > 0:
             self.get_random_alpha()
-            print(self.alpha)
+            print("Current alpha : ", self.alpha, ". ", len(self.list_of_labels), "alphas left")
             self.alpha_expansion_step()
-            print(self.image)
+            print(self.labeling)
 
     def alpha_expansion(self, number_of_iterations):
         """Perform iterations of alpha-expansion
@@ -177,4 +176,4 @@ class MaxFlowGraph():
         int
             Node weight
         """
-        return lookup_table[label1, label2] if label1 != label2 else self.beta
+        return lookup_table[label1, label2]

@@ -21,8 +21,6 @@ if len(sys.argv) > 1:
 else:
     raise Exception('Usage: python main.py image_path')
 
-print(input_image)
-
 config = configparser.ConfigParser()
 config.read('config.ini')
 noise = config['NOISE']['noise']
@@ -33,7 +31,6 @@ scale_gaussian = float(config['GAUSSIAN_NOISE']['scale'])
 prob_salt_and_pepper = float(config['SALT_AND_PEPPER_NOISE']['probability'])
 L = float(config['EDGE_WEIGHT']['L'])
 S = float(config['EDGE_WEIGHT']['S'])
-beta = float(config['NODE_WEIGHT']['beta'])
 number_of_iterations = int(config['ALGORITHM']['number_of_iterations'])
 
 fig = plt.figure()
@@ -58,7 +55,7 @@ else:
 
 ax_noised_image.imshow(noised_image, cmap=plt.get_cmap('gray'))
 
-maxflow_graph = MaxFlowGraph(L, S, beta, noised_image)
+maxflow_graph = MaxFlowGraph(L, S, noised_image)
 maxflow_graph.alpha_expansion(number_of_iterations)
 resulting_image = maxflow_graph.image
 
