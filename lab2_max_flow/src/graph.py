@@ -125,7 +125,7 @@ class MaxFlowGraph():
     def alpha_expansion_iteration(self):
         """Solve maxflow problem for all alphas
         """
-        list_of_labels = [k for k in range(256)]
+        self.list_of_labels = [k for k in range(256)]
         while len(self.list_of_labels) > 0:
             self.get_random_alpha()
             print("Current alpha ", self.alpha, ".", len(self.list_of_labels), "alphas left")
